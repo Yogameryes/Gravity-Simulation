@@ -1,7 +1,7 @@
 import pygame
 import math
 
-width = 1378
+width = 1360
 height = 768
 
 RED = (255, 0, 0)
@@ -17,6 +17,10 @@ screen = pygame.display.set_mode((width, height))
 clock = pygame.time.Clock()
 fps = 60
 running = True
+
+# trail settings (seconds). Set TRAIL_NEVER = True to keep trails forever.
+TRAIL_SECONDS = 5.0
+TRAIL_NEVER = True
 
 # camera state
 cam_x = 0.0   # world -> screen offset x (pixels)
@@ -37,22 +41,35 @@ class Ball:
         self.area = math.pi * (radius ** 2)
         # history of previous positions (world coordinates) for trail drawing
         self.history = []
-        self.max_history = 600
+        # set max_history according to global TRAIL_SECONDS / TRAIL_NEVER
+        self.update_max_history()
+
+    def update_max_history(self):
+        # set max_history to None for infinite history, or integer frames
+        global TRAIL_SECONDS, TRAIL_NEVER, fps
+        if TRAIL_NEVER:
+            self.max_history = None
+        else:
+            # clamp to at least 0 frames (0 seconds means no history)
+            frames = max(0, int(TRAIL_SECONDS * fps))
+            self.max_history = frames
 
     def update_pos(self):
         prev_posx = self.pos[0]
         prev_posy = self.pos[1]
         # store previous position in history (world coords)
         self.history.append((prev_posx, prev_posy))
-        if len(self.history) > self.max_history:
-            self.history.pop(0)
+        # trim history only if max_history is set
+        if self.max_history is not None:
+            while len(self.history) > self.max_history:
+                self.history.pop(0)
         # advance position by velocity (one simulation step per frame)
         self.pos[0] += self.speed[0]
         self.pos[1] += self.speed[1]
 
     def add_history(self, px, py):
         self.history.append((px, py))
-        if len(self.history) > self.max_history:
+        if self.max_history is not None and len(self.history) > self.max_history:
             self.history.pop(0)
 
     def draw(self, surface, cam_x=0.0, cam_y=0.0):
@@ -67,17 +84,37 @@ class Ball:
 
 
 Balls = [
-    Ball(width / 2, height / 2, 4, (0, 0, 255), 21 * 10**12, 0, 0),
-    Ball(width / 2 - 50, height / 2, 3, (23, 123, 52), 1 * 10**10, 0, 5),
-    Ball(width / 2 - 50, height / 2, 3, (23, 123, 52), 1 * 10**10, 0, 5),
+    Ball(width / 2 - 200, height / 2, 6, (255, 0, 0), 10 * 10**12, 0, 0.9),
+    Ball(width / 2 + 200, height / 2, 6, (0, 0, 52), 10 * 10**12, 0, -0.9),
+    Ball(width / 2 - 5, height / 2, 4, (0, 0, 52), 10 * 10**8, 0, 0.1),
+    Ball(width / 2 + 5 , height / 2, 4, (0, 0, 52), 10 * 10**8, 0, -0.1),
 ]
+
+# ensure all balls have correct max_history at start
+def apply_trail_settings_to_all():
+    for b in Balls:
+        b.update_max_history()
+
+apply_trail_settings_to_all()
 
 # simple font for HUD
 font = pygame.font.SysFont(None, 20)
 
+def set_trail_seconds(seconds):
+    global TRAIL_SECONDS, TRAIL_NEVER
+    TRAIL_NEVER = False
+    TRAIL_SECONDS = max(0.0, float(seconds))
+    apply_trail_settings_to_all()
+
+def toggle_trail_never():
+    global TRAIL_NEVER
+    TRAIL_NEVER = not TRAIL_NEVER
+    apply_trail_settings_to_all()
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+
             running = False
 
         # camera panning with right mouse button
@@ -100,6 +137,21 @@ while running:
                 # update camera offset relative to when pan started
                 cam_x = pan_cam_start[0] + dx
                 cam_y = pan_cam_start[1] + dy
+
+        elif event.type == pygame.KEYDOWN:
+            # increase/decrease trail time
+            if event.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
+                # increase by 1 second
+                if TRAIL_NEVER:
+                    # switch to finite first
+                    toggle_trail_never()
+                set_trail_seconds(TRAIL_SECONDS + 1.0)
+            elif event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
+                if TRAIL_NEVER:
+                    toggle_trail_never()
+                set_trail_seconds(max(0.0, TRAIL_SECONDS - 1.0))
+            elif event.key == pygame.K_n:
+                toggle_trail_never()
 
     screen.fill("black")
 
@@ -149,6 +201,14 @@ while running:
     # draw all Balls (trails and balls) with camera offset
     for b in Balls:
         b.draw(screen, cam_x=cam_x, cam_y=cam_y)
+
+    # HUD: trail info and controls
+    if TRAIL_NEVER:
+        trail_text = "Trail: Forever (press N to toggle)"
+    else:
+        trail_text = f"Trail: {TRAIL_SECONDS:.0f}s  (+/- to change, N toggles Forever)"
+    surf = font.render(trail_text, True, (255, 255, 255))
+    screen.blit(surf, (8, 8))
 
     pygame.display.flip()
     clock.tick(fps)
