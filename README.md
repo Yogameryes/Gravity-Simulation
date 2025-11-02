@@ -1,6 +1,12 @@
 # About this project
 This is a 2D N-body gravity simulation using Newton's laws of Gravitation
 
+# Screenshots
+<img width="1080" height="720" alt="2025-11-02-223234_hyprshot" src="https://github.com/user-attachments/assets/230e358e-f308-4629-b2fa-758025b6b89d" />
+<img width="1080" height="720" alt="2025-11-02-223218_hyprshot" src="https://github.com/user-attachments/assets/7fe4bece-89e7-4c66-9a99-924db22578d3" />
+
+
+
 # Features
 - Real Time **Gravitional Interaction** Between Objects
 >Well, it's called a Gravity Simulation for a reason.
