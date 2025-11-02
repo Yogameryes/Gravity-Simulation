@@ -65,6 +65,7 @@ Used to define the starting `x` position of the object.
 
 `radius`:
 Defines the radius of the object.
+>Example: `4`, `12`
 
 `color `:
 This Defines the **color** of your Object in the form of rgb values.
