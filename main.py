@@ -15,11 +15,11 @@ pygame.init()
 screen = pygame.display.set_mode((width, height))
 
 clock = pygame.time.Clock()
-fps = 60
+fps=60
 running = True
 
 # trail settings (seconds). Set TRAIL_NEVER = True to keep trails forever.
-TRAIL_SECONDS = 5.0
+TRAIL_SECONDS = 1
 TRAIL_NEVER = True
 
 # camera state
@@ -31,10 +31,13 @@ pan_cam_start = (0.0, 0.0)
 
 
 class Ball:
-    def __init__(self, x_pos, y_pos, radius, color, mass, x_speed, y_speed):
+    def __init__(self, x_pos, y_pos, radius, color, mass, x_speed, y_speed, density, frag):
         self.pos = [float(x_pos), float(y_pos)]
         self.color = color
+        self.base_color = color  # permanent default color used for resets
         self.mass = mass
+        self.density = density
+        self.frag = frag
         # keep simulation velocities as floats
         self.speed = [float(x_speed), float(y_speed)]
         self.radius = int(radius)
@@ -84,10 +87,10 @@ class Ball:
 
 
 Balls = [
-    Ball(width / 2 - 200, height / 2, 6, (255, 0, 0), 10 * 10**12, 0, 0.9),
-    Ball(width / 2 + 200, height / 2, 6, (0, 0, 52), 10 * 10**12, 0, -0.9),
-    Ball(width / 2 - 5, height / 2, 4, (0, 0, 52), 10 * 10**8, 0, 0.1),
-    Ball(width / 2 + 5 , height / 2, 4, (0, 0, 52), 10 * 10**8, 0, -0.1),
+    Ball(width / 2 , height / 2, 10, (255, 0, 0), 10 * 1e13, 0, 0, 10, False),
+    Ball(width / 2 - 248, height / 2, 5, (0, 255, 0), 2 * 1e10, 0, -2.1, 1.3, False),
+    Ball(width / 2 + 260, height / 2, 5, (0, 255, 0), 2 * 1e10, 0, 3, 1.4, False),
+
 ]
 
 # ensure all balls have correct max_history at start
@@ -145,11 +148,11 @@ while running:
                 if TRAIL_NEVER:
                     # switch to finite first
                     toggle_trail_never()
-                set_trail_seconds(TRAIL_SECONDS + 1.0)
+                set_trail_seconds(TRAIL_SECONDS + 0.1)
             elif event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
                 if TRAIL_NEVER:
                     toggle_trail_never()
-                set_trail_seconds(max(0.0, TRAIL_SECONDS - 1.0))
+                set_trail_seconds(max(0.0, TRAIL_SECONDS - 0.1))
             elif event.key == pygame.K_n:
                 toggle_trail_never()
 
@@ -180,6 +183,38 @@ while running:
             other.speed[0] += (attraction / other.mass) * (dist_x / distance)
             other.speed[1] += (attraction / other.mass) * (dist_y / distance)
 
+
+            angleOfTangent = math.atan2(each.speed[0], each.speed[1]) * (180.0 / math.pi)
+
+            hypotTangent = math.hypot(each.speed[0], each.speed[1])
+
+            #Shows Tangent Line
+            """ pygame.draw.line(screen, (0, 255, 0),
+                             (int(each.pos[0] + cam_x), int(each.pos[1] + cam_y)),
+                             (int(each.pos[0] + cam_x + math.sin(math.radians(angleOfTangent)) * hypotTangent * 10),
+                              int(each.pos[1] + cam_y + math.cos(math.radians(angleOfTangent)) * hypotTangent * 10)), 2)
+            """
+            #Shows Line Between Centers
+            """
+            pygame.draw.line(screen, (150, 150, 150),
+                             (int(each.pos[0] + cam_x), int(each.pos[1] + cam_y)),
+                             (int(other.pos[0] + cam_x), int(other.pos[1] + cam_y)), 1) """
+            
+            #Roche Limit
+            rocheLimit = each.radius * (2 * each.density / other.density) ** (1/3)
+            pygame.draw.line(screen, (150, 150, 150),
+                             (int(each.pos[0] + cam_x), int(each.pos[1] + cam_y)),
+                             (int(each.pos[0] + rocheLimit + cam_x), int(each.pos[1] + cam_y)), 1)
+            
+            originalEachColor = each.color
+            originalOtherColor = other.color
+            
+            
+            
+            
+
+
+            # check for collision / merging
             if distance < each.radius + other.radius:
                 # merge smaller into larger
                 if each.mass >= other.mass:
@@ -195,6 +230,24 @@ while running:
                     Balls.pop(i)
                     i -= 1  # compensate for outer increment below
                     break  # current 'each' removed; stop inner loop
+
+            # flash green while inside Roche limit; otherwise reset to base_color
+            if other.frag == False:
+                if distance < rocheLimit:
+                    other.color = (0, 255, 0)
+                    if other.speed[0] > other.speed[1]:
+                        for k in range(10):
+                            Balls.append(Ball(other.pos[0] + k + 10 + (other.radius/10), other.pos[1], 1, other.base_color, other.mass/10, other.speed[0], other.speed[1], other.density, True))
+
+                        Balls.pop(j)
+                    else:
+                        for k in range(10):
+                            Balls.append(Ball(other.pos[0], other.pos[1] + k + 10 + (other.radius/10), 1, other.base_color, other.mass/10, other.speed[0], other.speed[1], other.density, True))
+
+                        Balls.pop(j)
+                else:
+                    other.color = other.base_color
+
             j += 1
         i += 1
 
