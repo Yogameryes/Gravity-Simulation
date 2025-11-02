@@ -1,7 +1,7 @@
 # About this project
 This is a 2D N-body gravity simulation using Newton's laws of Gravitation
 
-## Features
+# Features
 - Real Time **Gravitional Interaction** Between Objects
 >Well, it's called a Gravity Simulation for a reason.
 - **Collision** between the Objects.
@@ -9,7 +9,7 @@ This is a 2D N-body gravity simulation using Newton's laws of Gravitation
 - **Roche Limit** 
 >Objects when too close to each other can rip apart each other because of the tidal forces
 
-## How to get started?
+# How to get started?
 
 ### Installing and setting up Python
 First, Download **Python 3.13.7** or newer, then create a virtual envirment using 
