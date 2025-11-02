@@ -77,6 +77,7 @@ This Defines the **mass** of your Object, Greater the mass, Greater will be its 
 `speed_x`:
 Used to define the initial **velocity** of the object in the `x` axis.
 >Example: `2.23`, `-4`
+
 `speed_y`:
 Used to define the initial **velocity** of the object in the `y` axis.
 >Example: `1.56`, `-3`
