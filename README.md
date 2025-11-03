@@ -90,3 +90,11 @@ This is used to define the **density** of your Object.
 `isFragment`:
 This is used to know if the Object is a **Fragment** or not preventing the fragments from dividing furthur and **slowing down** the simulation.
 >Example: `False` (Default), `True` (This Makes your Object indentify as a Fragment)
+
+
+### Controls
+
+- **Right Click** + Drag: Panning the Camera
+- **N**: Toggles Trails
+- **Plus Key**: Increases the Trail by 0.1 Seconds
+- **Minus Key**: Decreases the Trail by 0.1 Seconds
